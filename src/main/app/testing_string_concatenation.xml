@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+    <http:listener-config name="HTTP_Listener_Configuration" host="0.0.0.0" port="8081" doc:name="HTTP Listener Configuration"/>
+    <flow name="testing_string_concatenationFlow">
+        <http:listener config-ref="HTTP_Listener_Configuration" path="/" doc:name="HTTP"/>
+        <set-variable variableName="numIterations" value="#[Integer.parseInt(message.inboundProperties.'http.query.params'.numIterations or 10)]" doc:name="Set Num Iterations"/>
+        <set-variable variableName="stringConcatStart" value="#[server.nanoTime()]" doc:name="String Concat Start"/>
+        <custom-transformer class="com.deloitte.tsc.transformers.StringConcatenationTransformer" doc:name="String Concat Execution"/>
+        <set-variable variableName="stringConcatenationEndtime" value="#[server.nanoTime()]" doc:name="String Concat End"/>
+        <set-variable variableName="streamStartTime" value="#[server.nanoTime()]" doc:name="Stream Start"/>
+        <logger level="INFO" doc:name="JAVA TRANSFORM GOES HERE"/>
+        <set-variable variableName="streamEndTime" value="#[server.nanoTime()]" doc:name="Stream End Time"/>
+        <set-payload value="{
+  &quot;completedInMillis&quot;: #[(flowVars.streamEndTime - flowVars.stringConcatStart) / 1000000],
+  &quot;stringConcatenationTimeMillis&quot;: #[(flowVars.stringConcatenationEndTime - flowVars.stringConcatStart) / 1000000],
+  &quot;stringConcatenationTimeNanos&quot;: #[flowVars.stringConcatenationEndTime - flowVars.stringConcatStart],
+  &quot;streamTimeMillis&quot;: #[(flowVars.streamEndTime - flowVars.streamStartTime) / 1000000],
+  &quot;streamTimeNanos&quot;: #[flowVars.streamEndTime - flowVars.streamStartTime],
+  &quot;numIterations&quot;: #[flowVars.numIterations]
+}" mimeType="application/json" doc:name="Set Payload"/>
+    </flow>
+</mule>
