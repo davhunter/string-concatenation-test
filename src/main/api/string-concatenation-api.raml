@@ -1,0 +1,59 @@
+#%RAML 1.0
+title: String Concatenation API
+version: 1.0
+baseUri: http://localhost:8081/sca/
+
+/testDriver:
+  description: Main driver for testing to be done; utilizes /test under the covers
+  get:
+    queryParameters:
+      numIterations:
+        type: integer
+        required: false
+        default: 10
+      testType:
+        enum: ["String Concatenation", "StringBuffer", "StringBuilder"]
+        required: false
+        default: "String Concatenation"
+    responses:
+      200:
+        body:
+          application/json:
+            properties:
+              testType:
+                type: string
+              averageResponseMillis:
+                type: number
+              averageResponseNanos:
+                type: number
+              standardDeviation:
+                type: number
+              numIterations:
+                type: integer
+                
+/test:
+  description: Runs a specific test
+  get:
+    queryParameters:
+      numIterations:
+        type: integer
+        required: false
+        default: 10
+      testType:
+        enum: ["String Concatenation", "StringBuffer", "StringBuilder"]
+        required: false
+        default: "String Concatenation"
+    responses:
+      200:
+        body:
+          application/json:
+            properties:
+              testType:
+                type: string
+              completedInMillis:
+                type: integer
+              completedInNanos:
+                type: integer
+              numIterations:
+                type: integer
+  
