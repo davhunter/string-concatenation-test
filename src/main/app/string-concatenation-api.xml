@@ -1,18 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:context="http://www.springframework.org/schema/context" xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
 http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
 http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
-http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd">
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-current.xsd">
     <http:listener-config name="string-concatenation-api-httpListenerConfig" host="0.0.0.0" port="8081" doc:name="HTTP Listener Configuration"/>
     <apikit:config name="string-concatenation-api-config" raml="string-concatenation-api.raml" consoleEnabled="false" doc:name="Router"/>
     <http:request-config name="HTTP_Request_Configuration" host="localhost" port="8081" basePath="/sca/" doc:name="HTTP Request Configuration">
         <http:raml-api-configuration location="string-concatenation-api.raml"/>
     </http:request-config>
+    <context:property-placeholder location="tsc-${mule.env}.properties"/>
     <flow name="string-concatenation-api-main">
-        <http:listener config-ref="string-concatenation-api-httpListenerConfig" path="/api/*" doc:name="HTTP"/>
+        <http:listener config-ref="string-concatenation-api-httpListenerConfig" path="/sca/*" doc:name="HTTP"/>
         <apikit:router config-ref="string-concatenation-api-config" doc:name="APIkit Router"/>
         <exception-strategy ref="string-concatenation-api-apiKitGlobalExceptionMapping" doc:name="Reference Exception Strategy"/>
     </flow>
@@ -51,35 +53,33 @@ http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee
 %output application/java
 
 ---
-(0 to 10)
+(0 to p('testdriver.configuration.numIterations'))
 map [
 	"String Builder",
 	100
 ]]]></dw:set-payload>
         </dw:transform-message>
+        <logger message="initial test drive data: #[payload]" level="INFO" doc:name="Log Initial test drive data"/>
         <request-reply doc:name="Request-Reply">
-            <vm:outbound-endpoint exchange-pattern="one-way" path="splitRequestRecords" doc:name="VM"/>
-            <vm:inbound-endpoint exchange-pattern="one-way" path="finishedProcessing" doc:name="VM"/>
+            <vm:outbound-endpoint exchange-pattern="one-way" path="splitRequestRecords" doc:name="Sent to Q for Message Splitting"/>
+            <vm:inbound-endpoint exchange-pattern="one-way" path="finishedProcessing" doc:name="Listen to Q for Aggregated Finished Processing"/>
         </request-reply>
+        <logger message="Aggregated data from out of VM: #[payload]" level="INFO" doc:name="Log aggregated data from out of VM"/>
         <set-payload value="#[NullPayload.getInstance()]" doc:name="Set Payload"/>
     </flow>
     <flow name="splitRequestRecordsFlow">
-        <vm:inbound-endpoint exchange-pattern="one-way" path="splitRequestRecords" doc:name="VM"/>
-        <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+        <vm:inbound-endpoint exchange-pattern="one-way" path="splitRequestRecords" doc:name="Listen to Q for Message Splitting"/>
         <collection-splitter doc:name="Collection Splitter"/>
-        <vm:outbound-endpoint exchange-pattern="one-way" path="processRequest" doc:name="VM"/>
+        <vm:outbound-endpoint exchange-pattern="one-way" path="processRequest" doc:name="Send to Q for Message Processing"/>
     </flow>
     <flow name="processRequestFlow">
-        <vm:inbound-endpoint exchange-pattern="one-way" path="processRequest" doc:name="VM"/>
-        <logger message="#[payload]" level="INFO" doc:name="Logger"/>
-        <http:request config-ref="HTTP_Request_Configuration" path="/test" method="GET" doc:name="Call Execution API">
-            <http:request-builder>
-                <http:query-param paramName="numIterations" value="10"/>
-                <http:query-param paramName="testType" value="String Concatenation"/>
-            </http:request-builder>
-        </http:request>
+        <vm:inbound-endpoint exchange-pattern="one-way" path="processRequest" doc:name="Listen to Q for Message Processing"/>
+        <logger message="Single request: #[payload]" level="INFO" doc:name="Log single request data"/>
+        <http:request config-ref="HTTP_Request_Configuration" path="/test" method="GET" doc:name="Call Test API"/>
         <collection-aggregator failOnTimeout="true" doc:name="Collection Aggregator"/>
-        <vm:outbound-endpoint exchange-pattern="one-way" path="finishedProcessing" doc:name="VM"/>
+        <byte-array-to-string-transformer doc:name="Byte Array to String"/>
+        <logger message="aggregated data before VM: #[payload]" level="INFO" doc:name="Log aggregated data before VM"/>
+        <vm:outbound-endpoint exchange-pattern="one-way" path="finishedProcessing" doc:name="Send to Q for Aggregated Finished Processing"/>
     </flow>
     <apikit:mapping-exception-strategy name="string-concatenation-api-apiKitGlobalExceptionMapping">
         <apikit:mapping statusCode="404">
