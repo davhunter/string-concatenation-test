@@ -1,18 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns:context="http://www.springframework.org/schema/context" xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:context="http://www.springframework.org/schema/context" xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
 http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
 http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
 http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
-http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-current.xsd">
+http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-current.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd">
     <http:listener-config name="string-concatenation-api-httpListenerConfig" host="0.0.0.0" port="8081" doc:name="HTTP Listener Configuration"/>
     <apikit:config name="string-concatenation-api-config" raml="string-concatenation-api.raml" consoleEnabled="false" doc:name="Router"/>
     <http:request-config name="HTTP_Request_Configuration" host="localhost" port="8081" basePath="/sca/" doc:name="HTTP Request Configuration">
         <http:raml-api-configuration location="string-concatenation-api.raml"/>
     </http:request-config>
     <context:property-placeholder location="tsc-${mule.env}.properties"/>
+    <queued-asynchronous-processing-strategy name="Queued_Asynchronous_Processing_Strategy" maxThreads="80" minThreads="16" threadTTL="10000" doc:name="Queued Asynchronous Processing Strategy"/>
     <flow name="string-concatenation-api-main">
         <http:listener config-ref="string-concatenation-api-httpListenerConfig" path="/sca/*" doc:name="HTTP"/>
         <apikit:router config-ref="string-concatenation-api-config" doc:name="APIkit Router"/>
@@ -53,33 +55,39 @@ http://www.springframework.org/schema/context http://www.springframework.org/sch
 %output application/java
 
 ---
-(0 to p('testdriver.configuration.numIterations'))
-map [
-	"String Builder",
-	100
-]]]></dw:set-payload>
+(1 to p('testdriver.configuration.numIterations'))
+	map {
+		testType: flowVars.testType,
+		numIterations: flowVars.numIterations
+	} as :object {class: "com.deloitte.tsc.cdm.TestRequest"}]]></dw:set-payload>
         </dw:transform-message>
-        <logger message="initial test drive data: #[payload]" level="INFO" doc:name="Log Initial test drive data"/>
         <request-reply doc:name="Request-Reply">
             <vm:outbound-endpoint exchange-pattern="one-way" path="splitRequestRecords" doc:name="Sent to Q for Message Splitting"/>
-            <vm:inbound-endpoint exchange-pattern="one-way" path="finishedProcessing" doc:name="Listen to Q for Aggregated Finished Processing"/>
+            <vm:inbound-endpoint exchange-pattern="one-way" path="SPReturn" doc:name="Listen to Q for Aggregated Finished Processing"/>
         </request-reply>
-        <logger message="Aggregated data from out of VM: #[payload]" level="INFO" doc:name="Log aggregated data from out of VM"/>
-        <set-payload value="#[NullPayload.getInstance()]" doc:name="Set Payload"/>
+        <custom-transformer class="com.deloitte.tsc.transformers.TestDriverResultTransformer" doc:name="Calculate Results for Response"/>
     </flow>
     <flow name="splitRequestRecordsFlow">
         <vm:inbound-endpoint exchange-pattern="one-way" path="splitRequestRecords" doc:name="Listen to Q for Message Splitting"/>
         <collection-splitter doc:name="Collection Splitter"/>
         <vm:outbound-endpoint exchange-pattern="one-way" path="processRequest" doc:name="Send to Q for Message Processing"/>
     </flow>
-    <flow name="processRequestFlow">
+    <flow name="processRequestFlow" processingStrategy="Queued_Asynchronous_Processing_Strategy">
         <vm:inbound-endpoint exchange-pattern="one-way" path="processRequest" doc:name="Listen to Q for Message Processing"/>
-        <logger message="Single request: #[payload]" level="INFO" doc:name="Log single request data"/>
-        <http:request config-ref="HTTP_Request_Configuration" path="/test" method="GET" doc:name="Call Test API"/>
+        <enricher target="#[variable:apiResponse]" doc:name="Call API">
+            <processor-chain doc:name="Processor Chain">
+                <http:request config-ref="HTTP_Request_Configuration" path="/test" method="GET" doc:name="Call Test API">
+                    <http:request-builder>
+                        <http:query-param paramName="testType" value="#[payload.testType]"/>
+                        <http:query-param paramName="numIterations" value="#[payload.numIterations]"/>
+                    </http:request-builder>
+                </http:request>
+                <json:json-to-object-transformer returnClass="com.deloitte.tsc.cdm.TestResult" doc:name="API Response to CDM"/>
+            </processor-chain>
+        </enricher>
+        <expression-component doc:name="Add API Result to Test Request"><![CDATA[payload.testResult = flowVars.apiResponse]]></expression-component>
         <collection-aggregator failOnTimeout="true" doc:name="Collection Aggregator"/>
-        <byte-array-to-string-transformer doc:name="Byte Array to String"/>
-        <logger message="aggregated data before VM: #[payload]" level="INFO" doc:name="Log aggregated data before VM"/>
-        <vm:outbound-endpoint exchange-pattern="one-way" path="finishedProcessing" doc:name="Send to Q for Aggregated Finished Processing"/>
+        <vm:outbound-endpoint exchange-pattern="one-way" path="SPReturn" doc:name="Send to Q for Aggregated Finished Processing"/>
     </flow>
     <apikit:mapping-exception-strategy name="string-concatenation-api-apiKitGlobalExceptionMapping">
         <apikit:mapping statusCode="404">
