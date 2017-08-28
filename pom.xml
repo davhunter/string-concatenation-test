@@ -70,6 +70,7 @@
 					</docletArtifact>
 					<show>private</show>
 					<stylesheetfile>${basedir}/src/main/javadoc/customstylesheet.css</stylesheetfile>
+					<reportOutputDirectory>${basedir}/docs</reportOutputDirectory>
 					<additionalparam>
 						-sourceclasspath ${project.build.outputDirectory}
 					</additionalparam>

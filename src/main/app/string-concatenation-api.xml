@@ -27,19 +27,23 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
     <flow name="get:/test:string-concatenation-api-config">
         <set-variable variableName="numIterations" value="#[Integer.parseInt(message.inboundProperties.'http.query.params'.numIterations)]" doc:name="Set Num Iterations"/>
         <set-variable variableName="testType" value="#[message.inboundProperties.'http.query.params'.testType]" doc:name="Set Test Type"/>
-        <set-variable variableName="startTime" value="#[server.nanoTime()]" doc:name="Set Start Time"/>
         <choice doc:name="Choice">
             <when expression="#[flowVars.testType == &quot;StringBuilder&quot;]">
+        		<set-variable variableName="startTime" value="#[server.nanoTime()]" doc:name="Set Start Time"/>
                 <custom-transformer class="com.deloitte.tsc.transformers.StringBuilderTransformer" doc:name="StringBuilder Execution"/>
+        		<set-variable variableName="endTime" value="#[server.nanoTime()]" doc:name="Set End Time"/>
             </when>
             <when expression="#[flowVars.testType == &quot;StringBuffer&quot;]">
+        		<set-variable variableName="startTime" value="#[server.nanoTime()]" doc:name="Set Start Time"/>
 		        <custom-transformer class="com.deloitte.tsc.transformers.StringBufferTransformer" doc:name="StringBuffer Execution"/>
+        		<set-variable variableName="endTime" value="#[server.nanoTime()]" doc:name="Set End Time"/>
             </when>
             <otherwise>
+        		<set-variable variableName="startTime" value="#[server.nanoTime()]" doc:name="Set Start Time"/>
                 <custom-transformer class="com.deloitte.tsc.transformers.StringConcatenationTransformer" doc:name="String Concat Execution"/>
+        		<set-variable variableName="endTime" value="#[server.nanoTime()]" doc:name="Set End Time"/>
             </otherwise>
         </choice>
-        <set-variable variableName="endTime" value="#[server.nanoTime()]" doc:name="Set End Time"/>
         <set-payload value="{
      &quot;testType&quot;: &quot;#[flowVars.testType or &quot;String Concatenation&quot;]&quot;,
       &quot;completedInMillis&quot;: #[(flowVars.endTime - flowVars.startTime) / 1000000],
