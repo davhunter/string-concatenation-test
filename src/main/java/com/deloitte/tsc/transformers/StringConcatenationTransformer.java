@@ -3,7 +3,6 @@ package com.deloitte.tsc.transformers;
 import org.mule.api.MuleMessage;
 import org.mule.api.transformer.TransformerException;
 import org.mule.api.transport.PropertyScope;
-import org.mule.transformer.AbstractMessageTransformer;
 
 /**
  * This class is used for performing a transformation in which a string is
@@ -14,10 +13,8 @@ import org.mule.transformer.AbstractMessageTransformer;
  * @author David Hunter, Deloitte
  * @apiviz.landmark
  */
-public class StringConcatenationTransformer extends AbstractMessageTransformer {
+public class StringConcatenationTransformer extends AbstractConcatenationTransformer {
 	
-	private static final String MESSAGE = "ABCDEFGHIJ";
-
 	/**
 	 * Called by Anypoint to perform a transformation; no real data is used, a
 	 * string is just concatenated over and over.
@@ -36,7 +33,7 @@ public class StringConcatenationTransformer extends AbstractMessageTransformer {
 		int numIterations = (Integer)message.getProperty("numIterations", PropertyScope.INVOCATION);
 				
 		for(int i = 0; i < numIterations; i++) {
-			returnString += MESSAGE;
+			returnString += this.messageToAppend;
 		}
 		
 		return returnString;

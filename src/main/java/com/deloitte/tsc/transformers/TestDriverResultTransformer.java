@@ -16,7 +16,7 @@ import com.deloitte.tsc.cdm.TestRequest;
  * that the Apache Math classes can be used for calculation of statistics from
  * results.
  * 
- * @author David Hunter
+ * @author David Hunter, Deloitte
  * @apiviz.landmark
  * @apiviz.uses org.apache.commons.math3.stat.descriptive.DescriptiveStatistics
  *

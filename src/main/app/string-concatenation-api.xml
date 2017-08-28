@@ -30,17 +30,22 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
         <choice doc:name="Choice">
             <when expression="#[flowVars.testType == &quot;StringBuilder&quot;]">
         		<set-variable variableName="startTime" value="#[server.nanoTime()]" doc:name="Set Start Time"/>
-                <custom-transformer class="com.deloitte.tsc.transformers.StringBuilderTransformer" doc:name="StringBuilder Execution"/>
+                <custom-transformer class="com.deloitte.tsc.transformers.StringBuilderTransformer" doc:name="StringBuilder Execution">
+                    <spring:property name="messageToAppend" value="${test.configuration.message}"/>
+                </custom-transformer>
         		<set-variable variableName="endTime" value="#[server.nanoTime()]" doc:name="Set End Time"/>
             </when>
             <when expression="#[flowVars.testType == &quot;StringBuffer&quot;]">
         		<set-variable variableName="startTime" value="#[server.nanoTime()]" doc:name="Set Start Time"/>
-		        <custom-transformer class="com.deloitte.tsc.transformers.StringBufferTransformer" doc:name="StringBuffer Execution"/>
+		        <custom-transformer class="com.deloitte.tsc.transformers.StringBufferTransformer" doc:name="StringBuffer Execution">
+                    <spring:property name="messageToAppend" value="${test.configuration.message}"/>
+		        </custom-transformer>
         		<set-variable variableName="endTime" value="#[server.nanoTime()]" doc:name="Set End Time"/>
             </when>
             <otherwise>
         		<set-variable variableName="startTime" value="#[server.nanoTime()]" doc:name="Set Start Time"/>
-                <custom-transformer class="com.deloitte.tsc.transformers.StringConcatenationTransformer" doc:name="String Concat Execution"/>
+                <custom-transformer class="com.deloitte.tsc.transformers.StringConcatenationTransformer" doc:name="String Concat Execution">
+                </custom-transformer>
         		<set-variable variableName="endTime" value="#[server.nanoTime()]" doc:name="Set End Time"/>
             </otherwise>
         </choice>
