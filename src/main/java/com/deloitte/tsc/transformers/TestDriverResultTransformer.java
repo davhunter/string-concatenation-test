@@ -53,15 +53,43 @@ public class TestDriverResultTransformer extends AbstractMessageTransformer {
 			milliStats.addValue(r.getTestResult().getCompletedInMillis());
 			nanoStats.addValue(r.getTestResult().getCompletedInNanos());
 		}
+		
+		nanoStats = getTrimmedList(nanoStats);
+		milliStats = getTrimmedList(milliStats);
 			
 		double averageResponseMillis = milliStats.getMean();
 		double averageResponseNanos = nanoStats.getMean();
-		double standardDeviation = nanoStats.getPopulationVariance();
 		
 		result.setAverageResponseMillis(averageResponseMillis);
 		result.setAverageResponseNanos(averageResponseNanos);
-		result.setStandardDeviation(standardDeviation);
 		return result;
+	}
+	
+	/**
+	 * Gets a "trimmed" list of values from a <code>DescriptiveStatistics</code>
+	 * object. Pulls any values out of the list that are more than 1 standard
+	 * deviation from the mean.
+	 * 
+	 * @param inputRange
+	 *            The original list of values to be "trimmed"
+	 * @return A new list of values, containing only those values that were
+	 *         within 1 standard deviation of the original mean
+	 */
+	private DescriptiveStatistics getTrimmedList(DescriptiveStatistics inputRange) {
+		double mean = inputRange.getMean();
+		double sd = inputRange.getStandardDeviation();
+		double lowerRange = mean - sd;
+		double upperRange = mean + sd;
+		DescriptiveStatistics ds = new DescriptiveStatistics();
+		
+		for(int i = 0; i < inputRange.getN(); i++) {
+			double value = inputRange.getElement(i);
+			if(value > lowerRange && value < upperRange) {
+				ds.addValue(value);
+			}
+		}
+		
+		return ds;
 	}
 	
 }

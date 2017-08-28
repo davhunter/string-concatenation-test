@@ -19,23 +19,21 @@ public class TestDriverResult implements Serializable {
 	private String testType;
 	private double averageResponseMillis;
 	private double averageResponseNanos;
-	private double standardDeviation;
 	private int numIterations;
 
 	public TestDriverResult(String testType, float averageResponseMillis, float averageResponseNanos,
-			float standardDeviation, int numIterations) {
+			int numIterations) {
 		super();
 		this.testType = testType;
 		this.averageResponseMillis = averageResponseMillis;
 		this.averageResponseNanos = averageResponseNanos;
-		this.standardDeviation = standardDeviation;
 		this.numIterations = numIterations;
 	}
 
 	public TestDriverResult() {
 		this.testType = "";
 		this.numIterations = 0;
-		this.averageResponseMillis = this.averageResponseNanos = this.standardDeviation = 0.0;
+		this.averageResponseMillis = this.averageResponseNanos = 0.0;
 	}
 
 	@Override
@@ -47,8 +45,6 @@ public class TestDriverResult implements Serializable {
 		builder.append(averageResponseMillis);
 		builder.append(", averageResponseNanos=");
 		builder.append(averageResponseNanos);
-		builder.append(", standardDeviation=");
-		builder.append(standardDeviation);
 		builder.append(", numIterations=");
 		builder.append(numIterations);
 		builder.append("]");
@@ -77,14 +73,6 @@ public class TestDriverResult implements Serializable {
 
 	public void setAverageResponseNanos(double averageResponseNanos) {
 		this.averageResponseNanos = averageResponseNanos;
-	}
-
-	public double getStandardDeviation() {
-		return standardDeviation;
-	}
-
-	public void setStandardDeviation(double standardDeviation) {
-		this.standardDeviation = standardDeviation;
 	}
 
 	public int getNumIterations() {

@@ -68,6 +68,7 @@
 						<artifactId>apiviz</artifactId>
 						<version>${apiviz.version}</version>
 					</docletArtifact>
+					<show>private</show>
 					<stylesheetfile>${basedir}/src/main/javadoc/customstylesheet.css</stylesheetfile>
 					<additionalparam>
 						-sourceclasspath ${project.build.outputDirectory}
