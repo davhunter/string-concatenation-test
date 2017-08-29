@@ -19,21 +19,27 @@ public class TestDriverResult implements Serializable {
 	private String testType;
 	private double averageResponseMillis;
 	private double averageResponseNanos;
+	private double minResponseMillis;
+	private double minResponseNanos;
 	private int numIterations;
+	private int numCounted;
 
-	public TestDriverResult(String testType, float averageResponseMillis, float averageResponseNanos,
-			int numIterations) {
+	public TestDriverResult(String testType, float averageResponseMillis, float averageResponseNanos, int numIterations,
+			double minResponseMillis, double minResponseNanos, int numCounted) {
 		super();
 		this.testType = testType;
 		this.averageResponseMillis = averageResponseMillis;
 		this.averageResponseNanos = averageResponseNanos;
 		this.numIterations = numIterations;
+		this.minResponseMillis = minResponseMillis;
+		this.minResponseNanos = minResponseNanos;
+		this.numCounted = numCounted;
 	}
 
 	public TestDriverResult() {
 		this.testType = "";
-		this.numIterations = 0;
-		this.averageResponseMillis = this.averageResponseNanos = 0.0;
+		this.numIterations = this.numCounted = 0;
+		this.averageResponseMillis = this.averageResponseNanos = this.minResponseMillis = this.minResponseNanos = 0.0;
 	}
 
 	@Override
@@ -45,8 +51,14 @@ public class TestDriverResult implements Serializable {
 		builder.append(averageResponseMillis);
 		builder.append(", averageResponseNanos=");
 		builder.append(averageResponseNanos);
+		builder.append(", minResponseMillis=");
+		builder.append(minResponseMillis);
+		builder.append(", minResponseNanos=");
+		builder.append(minResponseNanos);
 		builder.append(", numIterations=");
 		builder.append(numIterations);
+		builder.append(", numCounted=");
+		builder.append(numCounted);
 		builder.append("]");
 		return builder.toString();
 	}
@@ -82,4 +94,29 @@ public class TestDriverResult implements Serializable {
 	public void setNumIterations(int numIterations) {
 		this.numIterations = numIterations;
 	}
+
+	public double getMinResponseMillis() {
+		return minResponseMillis;
+	}
+
+	public void setMinResponseMillis(double minResponseMillis) {
+		this.minResponseMillis = minResponseMillis;
+	}
+
+	public double getMinResponseNanos() {
+		return minResponseNanos;
+	}
+
+	public void setMinResponseNanos(double minResponseNanos) {
+		this.minResponseNanos = minResponseNanos;
+	}
+
+	public int getNumCounted() {
+		return numCounted;
+	}
+
+	public void setNumCounted(int numCounted) {
+		this.numCounted = numCounted;
+	}
+
 }

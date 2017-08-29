@@ -3,6 +3,37 @@ title: String Concatenation API
 version: 1.0
 baseUri: http://localhost:8081/sca/
 
+types:
+  TestDriverResult:
+    type: object
+    properties:
+      testType:
+        type: string
+      averageResponseMillis:
+        type: number
+      averageResponseNanos:
+        type: number
+      minResponseNanos:
+        type: number
+      minResponseMillis:
+        type: number
+      numIterations:
+        type: integer
+      numCounted:
+        type: integer
+        
+  TestResult:
+    type: object
+    properties:
+      testType:
+        type: string
+      completedInMillis:
+        type: integer
+      completedInNanos:
+        type: integer
+      numIterations:
+        type: integer
+
 /testDriver:
   description: Main driver for testing to be done; utilizes /test under the covers
   get:
@@ -19,15 +50,7 @@ baseUri: http://localhost:8081/sca/
       200:
         body:
           application/json:
-            properties:
-              testType:
-                type: string
-              averageResponseMillis:
-                type: number
-              averageResponseNanos:
-                type: number
-              numIterations:
-                type: integer
+            type: TestDriverResult
                 
 /test:
   description: Runs a specific test
@@ -45,13 +68,5 @@ baseUri: http://localhost:8081/sca/
       200:
         body:
           application/json:
-            properties:
-              testType:
-                type: string
-              completedInMillis:
-                type: integer
-              completedInNanos:
-                type: integer
-              numIterations:
-                type: integer
+            type: TestResult
   

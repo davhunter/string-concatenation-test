@@ -22,7 +22,7 @@ import com.deloitte.tsc.cdm.TestRequest;
  *
  */
 public class TestDriverResultTransformer extends AbstractMessageTransformer {
-
+	
 	/**
 	 * Called by Anypoint to perform the transformation. Uses the message's
 	 * payload to gather the response times (milliseconds and nanoseconds) for
@@ -50,18 +50,21 @@ public class TestDriverResultTransformer extends AbstractMessageTransformer {
 		DescriptiveStatistics nanoStats = new DescriptiveStatistics();
 		
 		for(TestRequest r : payload) {
-			milliStats.addValue(r.getTestResult().getCompletedInMillis());
-			nanoStats.addValue(r.getTestResult().getCompletedInNanos());
+			if(r.getTestResult().getCompletedInNanos() > 0) {
+				milliStats.addValue(r.getTestResult().getCompletedInMillis());
+				nanoStats.addValue(r.getTestResult().getCompletedInNanos());
+			}
 		}
 		
 		nanoStats = getTrimmedList(nanoStats);
 		milliStats = getTrimmedList(milliStats);
-			
-		double averageResponseMillis = milliStats.getMean();
-		double averageResponseNanos = nanoStats.getMean();
 		
-		result.setAverageResponseMillis(averageResponseMillis);
-		result.setAverageResponseNanos(averageResponseNanos);
+		result.setAverageResponseMillis(milliStats.getMean());
+		result.setAverageResponseNanos(nanoStats.getMean());
+		result.setMinResponseMillis(milliStats.getMin());
+		result.setMinResponseNanos(nanoStats.getMin());
+		result.setNumCounted((int)nanoStats.getN());
+		
 		return result;
 	}
 	
