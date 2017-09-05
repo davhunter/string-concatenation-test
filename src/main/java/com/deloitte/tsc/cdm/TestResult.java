@@ -15,11 +15,11 @@ import org.codehaus.jackson.annotate.JsonAutoDetect;
 public class TestResult implements Serializable {
 	private static final long serialVersionUID = 1L;
 	private String testType;
-	private int completedInMillis;
-	private int completedInNanos;
-	private int numIterations;
+	private long completedInMillis;
+	private long completedInNanos;
+	private long numIterations;
 
-	public TestResult(String testType, int completedInMillis, int completedInNanos, int numIterations) {
+	public TestResult(String testType, long completedInMillis, long completedInNanos, long numIterations) {
 		super();
 		this.testType = testType;
 		this.completedInMillis = completedInMillis;
@@ -55,27 +55,27 @@ public class TestResult implements Serializable {
 		this.testType = testType;
 	}
 
-	public int getCompletedInMillis() {
+	public long getCompletedInMillis() {
 		return completedInMillis;
 	}
 
-	public void setCompletedInMillis(int completedInMillis) {
+	public void setCompletedInMillis(long completedInMillis) {
 		this.completedInMillis = completedInMillis;
 	}
 
-	public int getCompletedInNanos() {
+	public long getCompletedInNanos() {
 		return completedInNanos;
 	}
 
-	public void setCompletedInNanos(int completedInNanos) {
+	public void setCompletedInNanos(long completedInNanos) {
 		this.completedInNanos = completedInNanos;
 	}
 
-	public int getNumIterations() {
+	public long getNumIterations() {
 		return numIterations;
 	}
 
-	public void setNumIterations(int numIterations) {
+	public void setNumIterations(long numIterations) {
 		this.numIterations = numIterations;
 	}
 }
