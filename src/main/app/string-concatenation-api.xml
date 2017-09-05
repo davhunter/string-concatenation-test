@@ -43,6 +43,20 @@ http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mu
 		        </custom-transformer>
         		<set-variable variableName="endTime" value="#[server.nanoTime()]" doc:name="Set End Time"/>
             </when>
+            <when expression="#[flowVars.testType == &quot;DTL&quot;]">
+        		<set-variable variableName="startTime" value="#[server.nanoTime()]" doc:name="Set Start Time"/>
+                <dw:transform-message doc:name="DataWeave Execution">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+
+%function appendStrings(string, additionalString, iteration)
+string when iteration > flowVars.numIterations otherwise
+appendStrings(string ++ additionalString, additionalString, iteration+1)
+---
+appendStrings("", p('test.configuration.message'), 1)]]></dw:set-payload>
+                </dw:transform-message>
+        		<set-variable variableName="endTime" value="#[server.nanoTime()]" doc:name="Set End Time"/>
+            </when>
             <otherwise>
         		<set-variable variableName="startTime" value="#[server.nanoTime()]" doc:name="Set Start Time"/>
                 <custom-transformer class="com.deloitte.tsc.transformers.StringConcatenationTransformer" doc:name="String Concat Execution">
